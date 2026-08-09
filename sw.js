@@ -2,12 +2,12 @@
  * Service Worker សម្រាប់ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន (PWA Offline Service Worker)
  */
 
-const CACHE_NAME = 'military-app-v3';
+const CACHE_NAME = 'military-app-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
-  './assets/css/style.css?v=3',
-  './assets/js/app.js?v=3',
+  './assets/css/style.css?v=4',
+  './assets/js/app.js?v=4',
   './manifest.json'
 ];
 
@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching App Assets v3');
+      console.log('[SW] Caching App Assets v4');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );

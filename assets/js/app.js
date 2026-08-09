@@ -3,7 +3,7 @@
  * JavaScript Interactive Application Engine & Mobile Image Compressor
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     // App State Variables
     let personnelData = [];
     let selectedPersonnelId = null;
@@ -86,6 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnUpdate) btnUpdate.addEventListener('click', handleUpdate);
     if (btnDelete) btnDelete.addEventListener('click', handleDelete);
     if (btnClear) btnClear.addEventListener('click', clearForm);
+
+    // Initial Load Data
+    loadPersonnel();
 
     function navigateRecord(direction) {
         if (!personnelData || personnelData.length === 0) return;
@@ -676,4 +679,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setStatus('បានលុបរូបថតចេញ!');
     };
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}

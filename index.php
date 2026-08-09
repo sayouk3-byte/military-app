@@ -25,7 +25,7 @@ require_once __DIR__ . '/config.php';
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Stylesheet -->
-    <link rel="stylesheet" href="assets/css/style.css?v=3">
+    <link rel="stylesheet" href="assets/css/style.css?v=4">
     <style>
 /* ==========================================================================
    ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន (Military Personnel Management System)
@@ -1186,6 +1186,6 @@ body.desktop-app-body {
     </div>
 
     <!-- JavaScript Bundle -->
-    <script src="assets/js/app.js?v=3"></script>
+    <script src="assets/js/app.js?v=4"></script>
 </body>
 </html>
