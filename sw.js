@@ -2,27 +2,27 @@
  * Service Worker សម្រាប់ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន (PWA Offline Service Worker)
  */
 
-const CACHE_NAME = 'military-app-v1';
+const CACHE_NAME = 'military-app-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
-  './assets/css/style.css',
-  './assets/js/app.js',
+  './assets/css/style.css?v=3',
+  './assets/js/app.js?v=3',
   './manifest.json'
 ];
 
-// Install Event - Cache Core Assets
+// Install Event - Cache Core Assets & Skip Waiting immediately
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching App Assets');
+      console.log('[SW] Caching App Assets v3');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting();
 });
 
-// Activate Event - Clean Old Caches
+// Activate Event - Purge all old caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -39,9 +39,10 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event - Network First with Cache Fallback
+// Fetch Event - Network First for assets, bypass cache for api.php
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('api.php')) return;
 
   event.respondWith(
     fetch(event.request)
@@ -55,10 +56,9 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        console.log('[SW] Fetch failed, serving from cache:', event.request.url);
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-          if (event.request.headers.get('accept').includes('text/html')) {
+          if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
             return caches.match('./index.php');
           }
         });
