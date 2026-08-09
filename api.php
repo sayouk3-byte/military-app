@@ -15,14 +15,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-$db = getDBConnection();
-$action = $_REQUEST['action'] ?? '';
-
-$response = [
-    'success' => false,
-    'message' => 'សកម្មភាពមិនត្រឹមត្រូវ (Invalid Action)',
-    'data' => null
-];
+function savePhotoIfBase64($photoStr, $prefix, $recordId) {
+    if (empty($photoStr)) return '';
+    if (strpos($photoStr, 'data:image') === 0) {
+        try {
+            $parts = explode(';base64,', $photoStr);
+            $ext = 'jpg';
+            if (strpos($parts[0], 'png') !== false) $ext = 'png';
+            else if (strpos($parts[0], 'webp') !== false) $ext = 'webp';
+            $photosDir = __DIR__ . '/photos';
+            if (!is_dir($photosDir)) mkdir($photosDir, 0777, true);
+            $filename = "{$prefix}_" . ($recordId ?: 'new') . "_" . time() . ".{$ext}";
+            $filepath = $photosDir . '/' . $filename;
+            file_put_contents($filepath, base64_decode($parts[1]));
+            return "photos/{$filename}";
+        } catch (Exception $e) {
+            return $photoStr;
+        }
+    }
+    return $photoStr;
+}
 
 try {
     switch ($action) {
@@ -54,7 +66,7 @@ try {
                 $params[':marital_status'] = $statusFilter;
             }
 
-            $sql .= " ORDER BY id DESC";
+            $sql .= " ORDER BY id ASC";
 
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
@@ -92,57 +104,106 @@ try {
         case 'add':
             $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-            $id_card = trim($input['id_card'] ?? '');
+            $surname = trim($input['surname'] ?? '');
+            $given_name = trim($input['given_name'] ?? '');
             $name_khmer = trim($input['name_khmer'] ?? '');
+            if (!$name_khmer && ($surname || $given_name)) {
+                $name_khmer = trim("{$surname} {$given_name}");
+            }
 
+            $id_card = trim($input['id_card'] ?? '');
             if ($name_khmer === '') {
-                throw new Exception('សូមបញ្ចូល "ឈ្មោះខ្មែរ" របស់បុគ្គលិកយោធា!');
-            }
-            if ($id_card === '') {
-                // ប្រសិនបើអត្តលេខទទេ ស្វ័យប្រវត្តបង្កើតអត្តលេខ
-                $id_card = 'AF-' . str_pad(mt_rand(10000, 99999), 6, '0', STR_PAD_LEFT);
+                throw new Exception('សូមបញ្ចូល "ឈ្មោះខ្មែរ" ឬ "គោត្តនាម/នាម"!');
             }
 
-            // ពិនិត្យមើលអត្តលេខជាន់គ្នា
-            $checkStmt = $db->prepare("SELECT COUNT(*) FROM military_personnel WHERE id_card = :id_card");
-            $checkStmt->execute([':id_card' => $id_card]);
-            if ($checkStmt->fetchColumn() > 0) {
-                throw new Exception("អត្តលេខ '{$id_card}' មានក្នុងប្រព័ន្ធរួចហើយ!");
-            }
+            $photo = savePhotoIfBase64($input['photo'] ?? '', 'officer', null);
+            $family_photo = savePhotoIfBase64($input['family_photo'] ?? '', 'family', null);
 
             $sql = "INSERT INTO military_personnel (
-                id_card, name_khmer, name_latin, gender, dob, rank, position, unit,
-                place_of_birth, current_address, enlistment_date, framework_date,
-                marital_status, phone, notes
+                manual_id, rank, surname, given_name, name_khmer, name_latin, gender, id_card, position,
+                unit_group, unit, rank_date, position_date, dob, enlistment_date, framework_date,
+                education_level, study_local, study_abroad, children_count, black_card_expiry, blue_card_expiry,
+                pob_village, pob_commune, pob_district, pob_province, place_of_birth,
+                addr_house, addr_group, addr_village, addr_commune, addr_district, addr_province, current_address,
+                marital_status, phone, notes, photo, family_photo, family_name
             ) VALUES (
-                :id_card, :name_khmer, :name_latin, :gender, :dob, :rank, :position, :unit,
-                :place_of_birth, :current_address, :enlistment_date, :framework_date,
-                :marital_status, :phone, :notes
+                :manual_id, :rank, :surname, :given_name, :name_khmer, :name_latin, :gender, :id_card, :position,
+                :unit_group, :unit, :rank_date, :position_date, :dob, :enlistment_date, :framework_date,
+                :education_level, :study_local, :study_abroad, :children_count, :black_card_expiry, :blue_card_expiry,
+                :pob_village, :pob_commune, :pob_district, :pob_province, :place_of_birth,
+                :addr_house, :addr_group, :addr_village, :addr_commune, :addr_district, :addr_province, :current_address,
+                :marital_status, :phone, :notes, :photo, :family_photo, :family_name
             )";
+
+            $pob_v = trim($input['pob_village'] ?? '');
+            $pob_c = trim($input['pob_commune'] ?? '');
+            $pob_d = trim($input['pob_district'] ?? '');
+            $pob_p = trim($input['pob_province'] ?? '');
+            $place_of_birth = trim($input['place_of_birth'] ?? '');
+            if (empty($place_of_birth)) {
+                $place_of_birth = implode(' - ', array_filter([$pob_v, $pob_c, $pob_d, $pob_p]));
+            }
+
+            $addr_h = trim($input['addr_house'] ?? '');
+            $addr_g = trim($input['addr_group'] ?? '');
+            $addr_v = trim($input['addr_village'] ?? '');
+            $addr_c = trim($input['addr_commune'] ?? '');
+            $addr_d = trim($input['addr_district'] ?? '');
+            $addr_p = trim($input['addr_province'] ?? '');
+            $current_address = trim($input['current_address'] ?? '');
+            if (empty($current_address)) {
+                $current_address = implode(' - ', array_filter([$addr_h, $addr_g, $addr_v, $addr_c, $addr_d, $addr_p]));
+            }
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':id_card' => $id_card,
+                ':manual_id' => trim($input['manual_id'] ?? ''),
+                ':rank' => trim($input['rank'] ?? ''),
+                ':surname' => $surname,
+                ':given_name' => $given_name,
                 ':name_khmer' => $name_khmer,
                 ':name_latin' => trim($input['name_latin'] ?? ''),
                 ':gender' => trim($input['gender'] ?? 'ប្រុស'),
-                ':dob' => !empty($input['dob']) ? $input['dob'] : null,
-                ':rank' => trim($input['rank'] ?? ''),
+                ':id_card' => $id_card,
                 ':position' => trim($input['position'] ?? ''),
+                ':unit_group' => trim($input['unit_group'] ?? ''),
                 ':unit' => trim($input['unit'] ?? ''),
-                ':place_of_birth' => trim($input['place_of_birth'] ?? ''),
-                ':current_address' => trim($input['current_address'] ?? ''),
+                ':rank_date' => !empty($input['rank_date']) ? $input['rank_date'] : null,
+                ':position_date' => !empty($input['position_date']) ? $input['position_date'] : null,
+                ':dob' => !empty($input['dob']) ? $input['dob'] : null,
                 ':enlistment_date' => !empty($input['enlistment_date']) ? $input['enlistment_date'] : null,
                 ':framework_date' => !empty($input['framework_date']) ? $input['framework_date'] : null,
+                ':education_level' => trim($input['education_level'] ?? ''),
+                ':study_local' => trim($input['study_local'] ?? ''),
+                ':study_abroad' => trim($input['study_abroad'] ?? ''),
+                ':children_count' => trim($input['children_count'] ?? ''),
+                ':black_card_expiry' => !empty($input['black_card_expiry']) ? $input['black_card_expiry'] : null,
+                ':blue_card_expiry' => !empty($input['blue_card_expiry']) ? $input['blue_card_expiry'] : null,
+                ':pob_village' => $pob_v,
+                ':pob_commune' => $pob_c,
+                ':pob_district' => $pob_d,
+                ':pob_province' => $pob_p,
+                ':place_of_birth' => $place_of_birth,
+                ':addr_house' => $addr_h,
+                ':addr_group' => $addr_g,
+                ':addr_village' => $addr_v,
+                ':addr_commune' => $addr_c,
+                ':addr_district' => $addr_d,
+                ':addr_province' => $addr_p,
+                ':current_address' => $current_address,
                 ':marital_status' => trim($input['marital_status'] ?? 'នៅលីវ'),
                 ':phone' => trim($input['phone'] ?? ''),
-                ':notes' => trim($input['notes'] ?? '')
+                ':notes' => trim($input['notes'] ?? ''),
+                ':photo' => $photo,
+                ':family_photo' => $family_photo,
+                ':family_name' => trim($input['family_name'] ?? '')
             ]);
 
+            $newId = $db->lastInsertId();
             $response = [
                 'success' => true,
                 'message' => 'បានរក្សាទុកទិន្នន័យបុគ្គលិកយោធាជោគជ័យ!',
-                'id' => $db->lastInsertId()
+                'id' => $newId
             ];
             break;
 
@@ -155,48 +216,121 @@ try {
                 throw new Exception('ID បុគ្គលិកមិនត្រឹមត្រូវ!');
             }
 
-            $id_card = trim($input['id_card'] ?? '');
+            $surname = trim($input['surname'] ?? '');
+            $given_name = trim($input['given_name'] ?? '');
             $name_khmer = trim($input['name_khmer'] ?? '');
-
-            if ($name_khmer === '') {
-                throw new Exception('សូមបញ្ចូល "ឈ្មោះខ្មែរ"!');
+            if (!$name_khmer && ($surname || $given_name)) {
+                $name_khmer = trim("{$surname} {$given_name}");
             }
 
+            $photo = savePhotoIfBase64($input['photo'] ?? '', 'officer', $id);
+            $family_photo = savePhotoIfBase64($input['family_photo'] ?? '', 'family', $id);
+
             $sql = "UPDATE military_personnel SET
-                id_card = :id_card,
+                manual_id = :manual_id,
+                rank = :rank,
+                surname = :surname,
+                given_name = :given_name,
                 name_khmer = :name_khmer,
                 name_latin = :name_latin,
                 gender = :gender,
-                dob = :dob,
-                rank = :rank,
+                id_card = :id_card,
                 position = :position,
+                unit_group = :unit_group,
                 unit = :unit,
-                place_of_birth = :place_of_birth,
-                current_address = :current_address,
+                rank_date = :rank_date,
+                position_date = :position_date,
+                dob = :dob,
                 enlistment_date = :enlistment_date,
                 framework_date = :framework_date,
+                education_level = :education_level,
+                study_local = :study_local,
+                study_abroad = :study_abroad,
+                children_count = :children_count,
+                black_card_expiry = :black_card_expiry,
+                blue_card_expiry = :blue_card_expiry,
+                pob_village = :pob_village,
+                pob_commune = :pob_commune,
+                pob_district = :pob_district,
+                pob_province = :pob_province,
+                place_of_birth = :place_of_birth,
+                addr_house = :addr_house,
+                addr_group = :addr_group,
+                addr_village = :addr_village,
+                addr_commune = :addr_commune,
+                addr_district = :addr_district,
+                addr_province = :addr_province,
+                current_address = :current_address,
                 marital_status = :marital_status,
                 phone = :phone,
-                notes = :notes
+                notes = :notes,
+                photo = :photo,
+                family_photo = :family_photo,
+                family_name = :family_name
                 WHERE id = :id";
+
+            $pob_v = trim($input['pob_village'] ?? '');
+            $pob_c = trim($input['pob_commune'] ?? '');
+            $pob_d = trim($input['pob_district'] ?? '');
+            $pob_p = trim($input['pob_province'] ?? '');
+            $place_of_birth = trim($input['place_of_birth'] ?? '');
+            if (empty($place_of_birth)) {
+                $place_of_birth = implode(' - ', array_filter([$pob_v, $pob_c, $pob_d, $pob_p]));
+            }
+
+            $addr_h = trim($input['addr_house'] ?? '');
+            $addr_g = trim($input['addr_group'] ?? '');
+            $addr_v = trim($input['addr_village'] ?? '');
+            $addr_c = trim($input['addr_commune'] ?? '');
+            $addr_d = trim($input['addr_district'] ?? '');
+            $addr_p = trim($input['addr_province'] ?? '');
+            $current_address = trim($input['current_address'] ?? '');
+            if (empty($current_address)) {
+                $current_address = implode(' - ', array_filter([$addr_h, $addr_g, $addr_v, $addr_c, $addr_d, $addr_p]));
+            }
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':id_card' => $id_card,
+                ':manual_id' => trim($input['manual_id'] ?? ''),
+                ':rank' => trim($input['rank'] ?? ''),
+                ':surname' => $surname,
+                ':given_name' => $given_name,
                 ':name_khmer' => $name_khmer,
                 ':name_latin' => trim($input['name_latin'] ?? ''),
                 ':gender' => trim($input['gender'] ?? 'ប្រុស'),
-                ':dob' => !empty($input['dob']) ? $input['dob'] : null,
-                ':rank' => trim($input['rank'] ?? ''),
+                ':id_card' => trim($input['id_card'] ?? ''),
                 ':position' => trim($input['position'] ?? ''),
+                ':unit_group' => trim($input['unit_group'] ?? ''),
                 ':unit' => trim($input['unit'] ?? ''),
-                ':place_of_birth' => trim($input['place_of_birth'] ?? ''),
-                ':current_address' => trim($input['current_address'] ?? ''),
+                ':rank_date' => !empty($input['rank_date']) ? $input['rank_date'] : null,
+                ':position_date' => !empty($input['position_date']) ? $input['position_date'] : null,
+                ':dob' => !empty($input['dob']) ? $input['dob'] : null,
                 ':enlistment_date' => !empty($input['enlistment_date']) ? $input['enlistment_date'] : null,
                 ':framework_date' => !empty($input['framework_date']) ? $input['framework_date'] : null,
+                ':education_level' => trim($input['education_level'] ?? ''),
+                ':study_local' => trim($input['study_local'] ?? ''),
+                ':study_abroad' => trim($input['study_abroad'] ?? ''),
+                ':children_count' => trim($input['children_count'] ?? ''),
+                ':black_card_expiry' => !empty($input['black_card_expiry']) ? $input['black_card_expiry'] : null,
+                ':blue_card_expiry' => !empty($input['blue_card_expiry']) ? $input['blue_card_expiry'] : null,
+                ':pob_village' => $pob_v,
+                ':pob_commune' => $pob_c,
+                ':pob_district' => $pob_d,
+                ':pob_province' => $pob_p,
+                ':place_of_birth' => $place_of_birth,
+                ':addr_house' => $addr_h,
+                ':addr_group' => $addr_g,
+                ':addr_village' => $addr_v,
+                ':addr_commune' => $addr_c,
+                ':addr_district' => $addr_d,
+                ':addr_province' => $addr_p,
+                ':current_address' => $current_address,
                 ':marital_status' => trim($input['marital_status'] ?? 'នៅលីវ'),
                 ':phone' => trim($input['phone'] ?? ''),
                 ':notes' => trim($input['notes'] ?? ''),
+                ':photo' => $photo,
+                ':family_photo' => $family_photo,
+                ':family_name' => trim($input['family_name'] ?? ''),
                 ':id' => $id
             ]);
 

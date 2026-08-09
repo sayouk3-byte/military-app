@@ -4,6 +4,8 @@ import sys
 import json
 import urllib.parse
 import re
+import base64
+import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 # Fix Windows console UTF-8 encoding
@@ -12,6 +14,29 @@ if sys.platform == 'win32':
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
+
+def save_photo_if_base64(photo_str, prefix, record_id):
+    if not photo_str:
+        return ''
+    if photo_str.startswith('data:image'):
+        try:
+            format_part, base64_data = photo_str.split(';base64,')
+            ext = 'jpg'
+            if 'png' in format_part:
+                ext = 'png'
+            elif 'webp' in format_part:
+                ext = 'webp'
+            photos_dir = os.path.join(BASE_DIR, 'photos')
+            os.makedirs(photos_dir, exist_ok=True)
+            filename = f"{prefix}_{record_id or 'new'}_{int(time.time())}.{ext}"
+            filepath = os.path.join(photos_dir, filename)
+            with open(filepath, 'wb') as f:
+                f.write(base64.b64decode(base64_data))
+            return f"photos/{filename}"
+        except Exception as e:
+            print("Error saving photo:", e)
+            return photo_str
+    return photo_str
 
 DB_FILE = os.path.join(BASE_DIR, 'military_db.sqlite')
 
@@ -264,6 +289,32 @@ class MilitaryRequestHandler(SimpleHTTPRequestHandler):
             if not name_khmer and (surname or given_name):
                 name_khmer = f"{surname} {given_name}".strip()
 
+            p_id = data.get('id')
+            photo_path = save_photo_if_base64(data.get('photo', ''), 'officer', p_id)
+            family_photo_path = save_photo_if_base64(data.get('family_photo', ''), 'family', p_id)
+
+            pob_v = data.get('pob_village', '').strip()
+            pob_c = data.get('pob_commune', '').strip()
+            pob_d = data.get('pob_district', '').strip()
+            pob_p = data.get('pob_province', '').strip()
+            place_of_birth = data.get('place_of_birth', '').strip()
+            if not place_of_birth:
+                place_of_birth = ' - '.join([x for x in [pob_v, pob_c, pob_d, pob_p] if x])
+
+            addr_h = data.get('addr_house', '').strip()
+            addr_g = data.get('addr_group', '').strip()
+            addr_v = data.get('addr_village', '').strip()
+            addr_c = data.get('addr_commune', '').strip()
+            addr_d = data.get('addr_district', '').strip()
+            addr_p = data.get('addr_province', '').strip()
+            current_address = data.get('current_address', '').strip()
+            if not current_address:
+                current_address = ' - '.join([x for x in [addr_h, addr_g, addr_v, addr_c, addr_d, addr_p] if x])
+
+            study_local = str(data.get('study_local', '') or '').strip()
+            study_abroad = str(data.get('study_abroad', '') or '').strip()
+            children_count = str(data.get('children_count', '') or '').strip()
+
             fields_tuple = (
                 data.get('manual_id', ''),
                 data.get('rank', ''),
@@ -276,34 +327,34 @@ class MilitaryRequestHandler(SimpleHTTPRequestHandler):
                 data.get('position', ''),
                 data.get('unit_group', ''),
                 data.get('unit', ''),
-                data.get('rank_date') or None,
-                data.get('position_date') or None,
-                data.get('dob') or None,
-                data.get('enlistment_date') or None,
-                data.get('framework_date') or None,
+                data.get('rank_date', '') or None,
+                data.get('position_date', '') or None,
+                data.get('dob', '') or None,
+                data.get('enlistment_date', '') or None,
+                data.get('framework_date', '') or None,
                 data.get('education_level', ''),
-                1 if data.get('study_local') else 0,
-                1 if data.get('study_abroad') else 0,
-                int(data.get('children_count') or 0),
-                data.get('black_card_expiry') or None,
-                data.get('blue_card_expiry') or None,
-                data.get('pob_village', ''),
-                data.get('pob_commune', ''),
-                data.get('pob_district', ''),
-                data.get('pob_province', ''),
-                data.get('place_of_birth', ''),
-                data.get('addr_house', ''),
-                data.get('addr_group', ''),
-                data.get('addr_village', ''),
-                data.get('addr_commune', ''),
-                data.get('addr_district', ''),
-                data.get('addr_province', ''),
-                data.get('current_address', ''),
+                study_local,
+                study_abroad,
+                children_count,
+                data.get('black_card_expiry', '') or None,
+                data.get('blue_card_expiry', '') or None,
+                pob_v,
+                pob_c,
+                pob_d,
+                pob_p,
+                place_of_birth,
+                addr_h,
+                addr_g,
+                addr_v,
+                addr_c,
+                addr_d,
+                addr_p,
+                current_address,
                 data.get('marital_status', 'នៅលីវ'),
                 data.get('phone', ''),
                 data.get('notes', ''),
-                data.get('photo', ''),
-                data.get('family_photo', ''),
+                photo_path,
+                family_photo_path,
                 data.get('family_name', '')
             )
 
@@ -321,28 +372,26 @@ class MilitaryRequestHandler(SimpleHTTPRequestHandler):
                         marital_status, phone, notes, photo, family_photo, family_name
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', fields_tuple)
+                new_id = cursor.lastrowid
                 conn.commit()
-                self.send_json({'success': True, 'message': 'បានរក្សាទុកទិន្នន័យបុគ្គលិកយោធាជោគជ័យ!'})
+                self.send_json({'success': True, 'message': 'បានរក្សាទុកទិន្នន័យបុគ្គលិកយោធាជោគជ័យ!', 'id': new_id})
 
             elif action == 'edit':
-                p_id = data.get('id')
                 if not p_id:
                     raise Exception('សូមជ្រើសរើសបុគ្គលិកយោធាដែលត្រូវកែប្រែ!')
 
                 cursor.execute('''
                     UPDATE military_personnel SET
-                    id_card = ?, name_khmer = ?, name_latin = ?, gender = ?, dob = ?,
-                    rank = ?, position = ?, unit = ?, place_of_birth = ?, current_address = ?,
-                    enlistment_date = ?, framework_date = ?, marital_status = ?, phone = ?, notes = ?
+                        manual_id = ?, rank = ?, surname = ?, given_name = ?, name_khmer = ?, name_latin = ?,
+                        gender = ?, id_card = ?, position = ?, unit_group = ?, unit = ?, rank_date = ?,
+                        position_date = ?, dob = ?, enlistment_date = ?, framework_date = ?, education_level = ?,
+                        study_local = ?, study_abroad = ?, children_count = ?, black_card_expiry = ?, blue_card_expiry = ?,
+                        pob_village = ?, pob_commune = ?, pob_district = ?, pob_province = ?, place_of_birth = ?,
+                        addr_house = ?, addr_group = ?, addr_village = ?, addr_commune = ?, addr_district = ?, addr_province = ?,
+                        current_address = ?, marital_status = ?, phone = ?, notes = ?, photo = ?, family_photo = ?,
+                        family_name = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
-                ''', (
-                    data.get('id_card', ''), data.get('name_khmer', ''), data.get('name_latin', ''),
-                    data.get('gender', 'ប្រុស'), data.get('dob') or None, data.get('rank', ''),
-                    data.get('position', ''), data.get('unit', ''), data.get('place_of_birth', ''),
-                    data.get('current_address', ''), data.get('enlistment_date') or None,
-                    data.get('framework_date') or None, data.get('marital_status', 'នៅលីវ'),
-                    data.get('phone', ''), data.get('notes', ''), p_id
-                ))
+                ''', fields_tuple + (p_id,))
                 conn.commit()
                 self.send_json({'success': True, 'message': 'បានកែប្រែទិន្នន័យបុគ្គលិកយោធាជោគជ័យ!'})
 

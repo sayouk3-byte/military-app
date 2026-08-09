@@ -226,6 +226,16 @@ body.desktop-app-body {
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+/* Expiry Date Warning Style (Red text, Red border & Light Red background) */
+.form-control.input-expired,
+.input-expired {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 2px solid #ef4444 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+}
+
 .form-control.select-ctrl {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");

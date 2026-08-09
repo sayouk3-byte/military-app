@@ -1,6 +1,6 @@
 /**
  * កម្មវិធីគ្រប់គ្រងទិន្នន័យនាយទាហាន (Military Personnel Management System)
- * JavaScript Interactive Application Engine
+ * JavaScript Interactive Application Engine & Mobile Image Compressor
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,18 +27,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Photo Elements
     const photoImg = document.getElementById('photoImg');
+    const photoDashedLabel = document.getElementById('photoDashedLabel');
     const familyPhotoImg = document.getElementById('familyPhotoImg');
     const familyDashedLabel = document.getElementById('familyDashedLabel');
+
+    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='105' height='130' viewBox='0 0 105 130'><rect width='105' height='130' fill='%231e293b'/><rect x='4' y='4' width='97' height='122' fill='%230f2537' stroke='%23d4af37' stroke-width='1.5'/><circle cx='52.5' cy='46' r='22' fill='%23d4af37'/><path d='M22,108 C22,78 83,78 83,108 Z' fill='%23d4af37'/><text x='52.5' y='120' font-family='sans-serif' font-size='10' font-weight='bold' fill='%23ffffff' text-anchor='middle'>4x6</text></svg>";
 
     // Buttons
     const btnAdd = document.getElementById('btnAdd');
     const btnUpdate = document.getElementById('btnUpdate');
     const btnDelete = document.getElementById('btnDelete');
     const btnClear = document.getElementById('btnClear');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
     const btnSearchId = document.getElementById('btnSearchId');
     const btnSearchName = document.getElementById('btnSearchName');
     const searchIdInput = document.getElementById('searchIdInput');
     const searchNameInput = document.getElementById('searchNameInput');
+
+    // Mobile FAB Buttons
+    const fabPrev = document.getElementById('fabPrev');
+    const fabSave = document.getElementById('fabSave');
+    const fabNext = document.getElementById('fabNext');
+    const fabScroll = document.getElementById('fabScroll');
 
     // Register Service Worker for PWA Mobile Support
     if ('serviceWorker' in navigator) {
@@ -47,11 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.log('[PWA] ServiceWorker Failed:', err));
     }
 
-    // Initial Load
-    loadPersonnel();
-
     const blackCardInput = document.getElementById('black_card_expiry');
     const blueCardInput = document.getElementById('blue_card_expiry');
+
+    // Register Service Worker for PWA Mobile Support
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('[PWA] ServiceWorker Registered:', reg.scope))
+            .catch(err => console.log('[PWA] ServiceWorker Failed:', err));
+    }
 
     // Event Listeners
     if (dobInput) {
@@ -63,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inp) {
             inp.addEventListener('input', checkExpiryDates);
             inp.addEventListener('change', checkExpiryDates);
+            inp.addEventListener('keyup', checkExpiryDates);
         }
     });
 
@@ -70,6 +86,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnUpdate) btnUpdate.addEventListener('click', handleUpdate);
     if (btnDelete) btnDelete.addEventListener('click', handleDelete);
     if (btnClear) btnClear.addEventListener('click', clearForm);
+
+    function navigateRecord(direction) {
+        if (!personnelData || personnelData.length === 0) return;
+        if (!selectedPersonnelId) {
+            const firstTr = tableBody.querySelector('tr');
+            selectRow(personnelData[0], firstTr);
+            return;
+        }
+
+        let currentIndex = personnelData.findIndex(p => String(p.id) === String(selectedPersonnelId));
+        if (currentIndex === -1) currentIndex = 0;
+
+        let targetIndex = currentIndex + direction;
+        if (targetIndex < 0) {
+            targetIndex = 0;
+            setStatus('បានដល់ទិន្នន័យដំបូងគេហើយ!');
+        } else if (targetIndex >= personnelData.length) {
+            targetIndex = personnelData.length - 1;
+            setStatus('បានដល់ទិន្នន័យចុងក្រោយគេហើយ!');
+        }
+
+        const targetPersonnel = personnelData[targetIndex];
+        const targetTr = tableBody.querySelector(`tr[data-id="${targetPersonnel.id}"]`);
+        selectRow(targetPersonnel, targetTr);
+    }
+
+    if (btnPrev) btnPrev.addEventListener('click', () => navigateRecord(-1));
+    if (btnNext) btnNext.addEventListener('click', () => navigateRecord(1));
+    if (fabPrev) fabPrev.addEventListener('click', () => navigateRecord(-1));
+    if (fabNext) fabNext.addEventListener('click', () => navigateRecord(1));
+    if (fabSave) fabSave.addEventListener('click', handleUpdate);
+
+    let isScrolledToForm = true;
+    if (fabScroll) {
+        fabScroll.addEventListener('click', () => {
+            if (isScrolledToForm) {
+                const tableCard = document.querySelector('.grid-table-card');
+                if (tableCard) tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                isScrolledToForm = false;
+            } else {
+                const formCard = document.querySelector('.input-form-card');
+                if (formCard) formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                isScrolledToForm = true;
+            }
+        });
+    }
 
     if (btnSearchId) btnSearchId.addEventListener('click', () => loadPersonnel({ search_id: searchIdInput.value.trim() }));
     if (btnSearchName) btnSearchName.addEventListener('click', () => loadPersonnel({ search_name: searchNameInput.value.trim() }));
@@ -176,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update highlight
         const allRows = tableBody.querySelectorAll('tr');
-        allRows.forEach(r => r.classList.remove('selected-row'));
+        allRows.forEach(r => r.classList.remove('selected-row', 'selected'));
         if (trElement) trElement.classList.add('selected-row');
 
         // Populate Form
@@ -194,8 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.value = val;
             }
         });
-
-        const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='105' height='130' viewBox='0 0 105 130'><rect width='105' height='130' fill='%231e293b'/><rect x='4' y='4' width='97' height='122' fill='%230f2537' stroke='%23d4af37' stroke-width='1.5'/><circle cx='52.5' cy='46' r='22' fill='%23d4af37'/><path d='M22,108 C22,78 83,78 83,108 Z' fill='%23d4af37'/><text x='52.5' y='120' font-family='sans-serif' font-size='10' font-weight='bold' fill='%23ffffff' text-anchor='middle'>4x6</text></svg>";
 
         // Personal Photo
         if (personnel.photo) {
@@ -221,7 +281,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateAgeDisplay();
         checkExpiryDates();
-        setStatus(`បានជ្រើសរើស៖ ${personnel.surname || ''} ${personnel.given_name || personnel.name_khmer || ''} (អត្តលេខ: ${personnel.id_card || '-'})`);
+
+        const curIdx = personnelData.findIndex(p => String(p.id) === String(selectedPersonnelId));
+        const idxInfo = curIdx !== -1 ? ` [ទី ${curIdx + 1}/${personnelData.length}]` : '';
+        setStatus(`បានជ្រើសរើស${idxInfo}៖ ${personnel.surname || ''} ${personnel.given_name || personnel.name_khmer || ''} (អត្តលេខ: ${personnel.id_card || '-'})`);
+
+        // Smooth scroll to form on mobile devices when selecting a row
+        if (window.innerWidth <= 992) {
+            const formCard = document.querySelector('.input-form-card');
+            if (formCard) {
+                formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
     }
 
     // ----------------------------------------------------
@@ -244,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await res.json();
             if (result.success) {
                 alert(result.message);
+                if (result.id) selectedPersonnelId = result.id;
                 loadPersonnel();
             } else {
                 alert('បរាជ័យ៖ ' + result.message);
@@ -328,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='105' height='130' viewBox='0 0 105 130'><rect width='105' height='130' fill='%231e293b'/><rect x='4' y='4' width='97' height='122' fill='%230f2537' stroke='%23d4af37' stroke-width='1.5'/><circle cx='52.5' cy='46' r='22' fill='%23d4af37'/><path d='M22,108 C22,78 83,78 83,108 Z' fill='%23d4af37'/><text x='52.5' y='120' font-family='sans-serif' font-size='10' font-weight='bold' fill='%23ffffff' text-anchor='middle'>4x6</text></svg>";
         if (photoImg) {
             photoImg.src = DEFAULT_AVATAR;
             photoImg.classList.remove('d-none');
@@ -342,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (familyDashedLabel) familyDashedLabel.classList.remove('d-none');
 
         const allRows = tableBody.querySelectorAll('tr');
-        allRows.forEach(r => r.classList.remove('selected-row'));
+        allRows.forEach(r => r.classList.remove('selected-row', 'selected'));
 
         if (ageDisplay) ageDisplay.innerText = '-- ឆ្នាំ';
         checkExpiryDates();
@@ -357,22 +428,37 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.type === 'checkbox') {
                 payload[field] = el.checked ? 1 : 0;
             } else {
-                let val = el.value.trim();
-                if (['dob', 'enlistment_date', 'rank_date', 'position_date', 'black_card_expiry', 'blue_card_expiry'].includes(field)) {
-                    val = parseIsoDate(val);
-                }
-                payload[field] = val;
+                payload[field] = el.value.trim();
             }
         });
 
         payload.name_khmer = `${payload.surname || ''} ${payload.given_name || ''}`.trim();
-        payload.photo = photoImg.src.startsWith('data:image') ? photoImg.src : '';
-        payload.family_photo = (familyPhotoImg && !familyPhotoImg.classList.contains('d-none')) ? familyPhotoImg.src : '';
+        
+        const pobParts = [payload.pob_village, payload.pob_commune, payload.pob_district, payload.pob_province].filter(Boolean);
+        payload.place_of_birth = pobParts.join(' - ');
+
+        const addrParts = [payload.addr_house, payload.addr_group, payload.addr_village, payload.addr_commune, payload.addr_district, payload.addr_province].filter(Boolean);
+        payload.current_address = addrParts.join(' - ');
+
+        // Personal Photo URL / Data String
+        if (photoImg && photoImg.src && !photoImg.src.includes('data:image/svg+xml')) {
+            payload.photo = photoImg.getAttribute('src') || photoImg.src;
+        } else {
+            payload.photo = '';
+        }
+
+        // Family Photo URL / Data String
+        if (familyPhotoImg && !familyPhotoImg.classList.contains('d-none') && familyPhotoImg.src) {
+            payload.family_photo = familyPhotoImg.getAttribute('src') || familyPhotoImg.src;
+        } else {
+            payload.family_photo = '';
+        }
+
         return payload;
     }
 
     // ----------------------------------------------------
-    // 3. Helper Functions & Image Handlers
+    // 3. Helper Functions & Image Compressor
     // ----------------------------------------------------
     function updateAgeDisplay() {
         if (!dobInput || !ageDisplay) return;
@@ -428,19 +514,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        [blackCardInput, blueCardInput].forEach(input => {
+        const blackInp = document.getElementById('black_card_expiry');
+        const blueInp = document.getElementById('blue_card_expiry');
+
+        [blackInp, blueInp].forEach(input => {
             if (!input) return;
             const val = input.value.trim();
             if (!val || val.includes('អចិន្ត្រៃយ៍')) {
                 input.classList.remove('input-expired');
+                input.style.backgroundColor = '';
+                input.style.color = '';
+                input.style.borderColor = '';
+                input.style.fontWeight = '';
                 return;
             }
 
             const parsedDate = parseDateToObj(val);
             if (parsedDate && parsedDate < today) {
                 input.classList.add('input-expired');
+                input.style.setProperty('background-color', '#fef2f2', 'important');
+                input.style.setProperty('color', '#dc2626', 'important');
+                input.style.setProperty('border-color', '#ef4444', 'important');
+                input.style.setProperty('font-weight', '700', 'important');
             } else {
                 input.classList.remove('input-expired');
+                input.style.backgroundColor = '';
+                input.style.color = '';
+                input.style.borderColor = '';
+                input.style.fontWeight = '';
             }
         });
     }
@@ -468,31 +569,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    // Image Upload Window Handlers
-    window.previewImage = function(input, targetImgId) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById(targetImgId);
-                if (img) img.src = e.target.result;
+    // Client-side Image Compressor
+    function compressImage(file, maxWidth, maxHeight, quality, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                callback(dataUrl);
             };
-            reader.readAsDataURL(input.files[0]);
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Image Upload Window Handlers (Global Scope)
+    window.previewPersonalImage = function(input) {
+        if (input.files && input.files[0]) {
+            setStatus('កំពុងដំណើរការបង្រួមរូបថតសាមីខ្លួន...');
+            compressImage(input.files[0], 600, 800, 0.85, function(dataUrl) {
+                if (photoImg) {
+                    photoImg.src = dataUrl;
+                    photoImg.classList.remove('d-none');
+                }
+                if (photoDashedLabel) photoDashedLabel.classList.add('d-none');
+                setStatus('បានជ្រើសរើស និងបង្រួមរូបថតសាមីខ្លួនរួចរាល់!');
+            });
         }
     };
 
     window.previewFamilyImage = function(input) {
         if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
+            setStatus('កំពុងដំណើរការបង្រួមរូបថតគ្រួសារ...');
+            compressImage(input.files[0], 800, 600, 0.85, function(dataUrl) {
                 if (familyPhotoImg) {
-                    familyPhotoImg.src = e.target.result;
+                    familyPhotoImg.src = dataUrl;
                     familyPhotoImg.classList.remove('d-none');
                 }
-                if (familyDashedLabel) {
-                    familyDashedLabel.classList.add('d-none');
-                }
-            };
-            reader.readAsDataURL(input.files[0]);
+                if (familyDashedLabel) familyDashedLabel.classList.add('d-none');
+                setStatus('បានជ្រើសរើស និងបង្រួមរូបថតគ្រួសាររួចរាល់!');
+            });
+        }
+    };
+
+    window.previewImage = function(input, targetImgId) {
+        if (targetImgId === 'familyPhotoImg') {
+            window.previewFamilyImage(input);
+        } else {
+            window.previewPersonalImage(input);
         }
     };
 
@@ -502,7 +644,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (input) input.value = '';
 
         if (imgId === 'photoImg') {
-            if (img) img.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='130' viewBox='0 0 100 130'><rect width='100' height='130' fill='%23004080'/><circle cx='50' cy='45' r='25' fill='%23d4af37'/><path d='M15,115 C15,80 85,80 85,115 Z' fill='%23d4af37'/></svg>";
+            if (img) img.src = DEFAULT_AVATAR;
+            if (photoDashedLabel) photoDashedLabel.classList.add('d-none');
         } else {
             if (img) {
                 img.src = '';
@@ -513,5 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (label) label.classList.remove('d-none');
             }
         }
+        setStatus('បានលុបរូបថតចេញ!');
     };
 });
