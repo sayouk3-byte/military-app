@@ -858,7 +858,7 @@ body.desktop-app-body {
                         <div class="form-row">
                             <label class="field-label" for="id">ល.រ:</label>
                             <div class="field-input-wrap">
-                                <input type="text" id="id" class="form-control text-center" readonly value="525">
+                                <input type="text" id="id" class="form-control text-center" readonly>
                             </div>
                         </div>
 
