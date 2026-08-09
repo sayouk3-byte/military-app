@@ -184,9 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderTable(data) {
+        if (!tableBody) return;
         tableBody.innerHTML = '';
 
-        if (!data || data.length === 0) {
+        if (!data || !Array.isArray(data) || data.length === 0) {
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="14" class="text-center" style="padding: 20px; color: #64748b;">
@@ -198,32 +199,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         data.forEach((p, idx) => {
-            const tr = document.createElement('tr');
-            tr.dataset.id = p.id;
+            try {
+                const tr = document.createElement('tr');
+                tr.dataset.id = p.id;
 
-            if (selectedPersonnelId && String(p.id) === String(selectedPersonnelId)) {
-                tr.classList.add('selected-row');
+                if (selectedPersonnelId && String(p.id) === String(selectedPersonnelId)) {
+                    tr.classList.add('selected-row');
+                }
+
+                tr.innerHTML = `
+                    <td>${p.id || (idx + 1)}</td>
+                    <td>${p.manual_id || ''}</td>
+                    <td>${p.rank || ''}</td>
+                    <td>${p.surname || ''}</td>
+                    <td>${p.given_name || p.name_khmer || ''}</td>
+                    <td>${p.gender || ''}</td>
+                    <td>${p.id_card || ''}</td>
+                    <td>${p.position || ''}</td>
+                    <td>${p.unit_group || ''}</td>
+                    <td>${p.unit || ''}</td>
+                    <td>${formatDisplayDate(p.dob)}</td>
+                    <td>${formatDisplayDate(p.enlistment_date)}</td>
+                    <td>${formatDisplayDate(p.rank_date)}</td>
+                    <td>${formatDisplayDate(p.position_date)}</td>
+                `;
+
+                tr.addEventListener('click', () => selectRow(p, tr));
+                tableBody.appendChild(tr);
+            } catch (err) {
+                console.error("Error rendering row:", err);
             }
-
-            tr.innerHTML = `
-                <td>${p.id || (idx + 1)}</td>
-                <td>${p.manual_id || ''}</td>
-                <td>${p.rank || ''}</td>
-                <td>${p.surname || ''}</td>
-                <td>${p.given_name || p.name_khmer || ''}</td>
-                <td>${p.gender || ''}</td>
-                <td>${p.id_card || ''}</td>
-                <td>${p.position || ''}</td>
-                <td>${p.unit_group || ''}</td>
-                <td>${p.unit || ''}</td>
-                <td>${formatDisplayDate(p.dob)}</td>
-                <td>${formatDisplayDate(p.enlistment_date)}</td>
-                <td>${formatDisplayDate(p.rank_date)}</td>
-                <td>${formatDisplayDate(p.position_date)}</td>
-            `;
-
-            tr.addEventListener('click', () => selectRow(p, tr));
-            tableBody.appendChild(tr);
         });
 
         // Auto-select first row if none selected
@@ -234,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function selectRow(personnel, trElement) {
+        if (!personnel) return;
         selectedPersonnelId = personnel.id;
 
         // Update highlight
@@ -246,15 +252,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById(field);
             if (!el) return;
 
-            if (el.type === 'checkbox') {
-                el.checked = Boolean(personnel[field]);
-            } else {
-                let val = personnel[field] || '';
-                if (['dob', 'enlistment_date', 'rank_date', 'position_date', 'black_card_expiry', 'blue_card_expiry'].includes(field)) {
-                    val = formatDisplayDate(val);
+            try {
+                if (el.type === 'checkbox') {
+                    el.checked = Boolean(personnel[field]);
+                } else {
+                    let val = personnel[field] || '';
+                    if (['dob', 'enlistment_date', 'rank_date', 'position_date', 'black_card_expiry', 'blue_card_expiry'].includes(field)) {
+                        val = formatDisplayDate(val);
+                    }
+                    el.value = val;
                 }
-                el.value = val;
-            }
+            } catch (e) {}
         });
 
         // Personal Photo
@@ -279,8 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (familyDashedLabel) familyDashedLabel.classList.remove('d-none');
         }
 
-        updateAgeDisplay();
-        checkExpiryDates();
+        try {
+            updateAgeDisplay();
+            checkExpiryDates();
+        } catch (e) {}
 
         const curIdx = personnelData.findIndex(p => String(p.id) === String(selectedPersonnelId));
         const idxInfo = curIdx !== -1 ? ` [ទី ${curIdx + 1}/${personnelData.length}]` : '';
@@ -488,12 +498,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDisplayDate(dateStr) {
         if (!dateStr) return '';
-        if (dateStr.includes('/')) return dateStr;
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+        try {
+            const str = String(dateStr).trim();
+            if (!str) return '';
+            if (str.includes('/')) return str;
+            if (str.includes('-')) {
+                const parts = str.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+                }
+            }
+            return str;
+        } catch (e) {
+            return String(dateStr || '');
         }
-        return dateStr;
     }
 
     function parseIsoDate(displayDate) {
