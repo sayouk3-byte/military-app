@@ -1,0 +1,22 @@
+{
+  "name": "ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន",
+  "short_name": "បុគ្គលិកយោធា",
+  "description": "Military Personnel Management System - Royal Cambodian Armed Forces",
+  "start_url": "./index.php",
+  "display": "standalone",
+  "background_color": "#edf1f5",
+  "theme_color": "#003366",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'><rect width='192' height='192' rx='30' fill='%23003366'/><path d='M96,25 L155,50 L155,100 C155,140 96,170 96,170 C96,170 37,140 37,100 L37,50 Z' fill='%23f59e0b'/><path d='M96,40 L140,60 L140,100 C140,132 96,155 96,155 C96,155 52,132 52,100 L52,60 Z' fill='%230f2537'/><polygon points='96,68 104,85 123,85 107,96 113,113 96,102 79,113 85,96 69,85 88,85' fill='%23d4af37'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23003366'/><path d='M256,60 L415,130 L415,260 C415,365 256,445 256,445 C256,445 97,365 97,260 L97,130 Z' fill='%23f59e0b'/><path d='M256,95 L375,150 L375,260 C375,345 256,405 256,405 C256,405 137,345 137,260 L137,150 Z' fill='%230f2537'/><polygon points='256,170 277,215 327,215 285,245 301,290 256,260 211,290 227,245 185,215 235,215' fill='%23d4af37'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

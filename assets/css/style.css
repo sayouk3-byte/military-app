@@ -1,0 +1,763 @@
+/* ==========================================================================
+   ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន (Military Personnel Management System)
+   Modern Mobile & Desktop UI Design System
+   ========================================================================== */
+
+:root {
+    --navy-header: #0f2537;
+    --navy-dark: #07131e;
+    --navy-primary: #003366;
+    --navy-light: #1e3a5f;
+    --gold-accent: #d4af37;
+    --gold-bright: #f59e0b;
+    --win-titlebar: #0c1825;
+    --win-bg: #f0f4f8;
+    --card-bg: #ffffff;
+    --border-color: #cbd5e1;
+    --border-focus: #0284c7;
+
+    --btn-add: linear-gradient(135deg, #059669 0%, #047857 100%);
+    --btn-update: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --btn-delete: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    --btn-clear: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    --btn-exit: linear-gradient(135deg, #475569 0%, #334155 100%);
+    --btn-search: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+
+    --row-selected: #0284c7;
+    --font-main: 'Kantumruy Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(15, 37, 55, 0.08), 0 2px 4px rgba(15, 37, 55, 0.04);
+    --shadow-lg: 0 10px 25px rgba(15, 37, 55, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-main);
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.desktop-app-body {
+    background: #e2e8f0;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: #1e293b;
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 12px;
+    min-height: 100vh;
+}
+
+/* ----------------------------------------------------
+   1. Window Container & Desktop Frame
+   ---------------------------------------------------- */
+.window-container {
+    background: var(--win-bg);
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 1480px;
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 24px);
+    transition: all 0.3s ease;
+}
+
+/* Window Titlebar Header */
+.window-titlebar {
+    background: linear-gradient(135deg, #091420 0%, #0f2537 100%);
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 2px solid var(--gold-accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-icon {
+    color: var(--gold-bright);
+    font-size: 18px;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4));
+}
+
+.app-title-text {
+    letter-spacing: 0.2px;
+}
+
+.titlebar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.win-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    width: 32px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.win-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.win-btn.win-close:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* Main Window Content */
+.window-content {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+}
+
+/* ----------------------------------------------------
+   2. Input Form Card & Grid Layout
+   ---------------------------------------------------- */
+.input-form-card {
+    background: var(--card-bg);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 14px 14px 14px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.form-legend {
+    background: linear-gradient(90deg, #003366 0%, #004d99 100%);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-left: 10px;
+    box-shadow: 0 2px 6px rgba(0, 51, 102, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 280px;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.field-label {
+    width: 140px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+    text-align: right;
+    padding-right: 4px;
+}
+
+.field-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.form-control {
+    width: 100%;
+    height: 36px;
+    padding: 6px 10px;
+    font-size: 13.5px;
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.form-control:hover {
+    border-color: #94a3b8;
+    background-color: #ffffff;
+}
+
+.form-control:focus {
+    background-color: #ffffff;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.form-control.select-ctrl {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+.form-control[readonly] {
+    background-color: #e2e8f0;
+    color: #475569;
+    font-weight: 700;
+    cursor: not-allowed;
+}
+
+.dob-wrap {
+    gap: 6px;
+}
+
+.age-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 10px;
+    height: 36px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* Column 3: Photos & Matrices */
+.col-3 {
+    border-left: 1px dashed #cbd5e1;
+    padding-left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.photo-box-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.photo-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #003366;
+    margin-bottom: 6px;
+}
+
+.photo-frame {
+    width: 110px;
+    height: 130px;
+    margin: 0 auto;
+    border: 2px dashed #94a3b8;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-frame:hover {
+    border-color: #0284c7;
+    background: #f0f9ff;
+}
+
+.photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-overlay-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(15, 37, 55, 0.85);
+    color: #ffffff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+.photo-upload-input {
+    display: none;
+}
+
+/* Matrices */
+.matrix-grid {
+    display: grid;
+    gap: 4px;
+}
+
+.grid-2x2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 32px 32px;
+}
+
+.grid-2x3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 32px 32px 32px;
+}
+
+.matrix-cell {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+}
+
+.cell-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.cell-val {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* ----------------------------------------------------
+   3. Action Toolbar Buttons
+   ---------------------------------------------------- */
+.action-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.act-btn {
+    height: 38px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 13.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.act-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.act-btn:active {
+    transform: translateY(0);
+}
+
+.btn-add { background: var(--btn-add); }
+.btn-update { background: var(--btn-update); }
+.btn-delete { background: var(--btn-delete); }
+.btn-clear { background: var(--btn-clear); }
+.btn-exit { background: var(--btn-exit); }
+
+/* ----------------------------------------------------
+   4. Search Fieldset & Toolbar
+   ---------------------------------------------------- */
+.search-fieldset {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.search-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 160px;
+}
+
+.search-control {
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.btn-search {
+    background: var(--btn-search);
+    color: #ffffff;
+    height: 36px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.btn-search:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* ----------------------------------------------------
+   5. Grid Table Data View
+   ---------------------------------------------------- */
+.grid-table-wrap {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
+    box-shadow: var(--shadow-sm);
+}
+
+.desktop-grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.desktop-grid-table th {
+    background: #0f2537;
+    color: #f59e0b;
+    font-weight: 600;
+    padding: 10px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 2px solid var(--gold-accent);
+}
+
+.desktop-grid-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+.desktop-grid-table tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.desktop-grid-table tr:hover {
+    background-color: #e0f2fe;
+    cursor: pointer;
+}
+
+.desktop-grid-table tr.selected {
+    background-color: var(--row-selected) !important;
+    color: #ffffff !important;
+}
+
+.desktop-grid-table tr.selected td {
+    color: #ffffff !important;
+}
+
+/* ----------------------------------------------------
+   6. Footer Status Bar
+   ---------------------------------------------------- */
+.app-statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f2537;
+    color: #cbd5e1;
+    border-top: 1px solid #1e293b;
+    padding: 8px 14px;
+    font-size: 12px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.statusbar-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.statusbar-credit {
+    font-weight: 600;
+    color: var(--gold-bright);
+}
+
+/* Utilities */
+.d-none { display: none !important; }
+.text-center { text-align: center; }
+
+/* ----------------------------------------------------
+   7. Mobile & Tablet Touch Responsiveness (@media)
+   ---------------------------------------------------- */
+@media screen and (max-width: 1024px) {
+    .form-grid-layout {
+        grid-template-columns: 1fr 1fr;
+    }
+    .col-3 {
+        grid-column: span 2;
+        border-left: none;
+        border-top: 1px dashed #cbd5e1;
+        padding-left: 0;
+        padding-top: 12px;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    body.desktop-app-body {
+        padding: 0;
+        background: #f0f4f8;
+    }
+
+    .window-container {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+    }
+
+    .window-titlebar {
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .app-title-text {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .titlebar-right .win-setting,
+    .titlebar-right .win-min,
+    .titlebar-right .win-max {
+        display: none;
+    }
+
+    .window-content {
+        padding: 10px;
+        gap: 12px;
+    }
+
+    .input-form-card {
+        padding: 14px 10px 10px 10px;
+        border-radius: 12px;
+    }
+
+    .form-legend {
+        font-size: 13px;
+        padding: 4px 12px;
+    }
+
+    .form-grid-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .col-3 {
+        grid-column: span 1;
+        border-top: 1px dashed #cbd5e1;
+        padding-left: 0;
+        padding-top: 12px;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        min-height: auto;
+    }
+
+    .field-label {
+        width: 100%;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f2537;
+    }
+
+    .field-input-wrap {
+        width: 100%;
+    }
+
+    .form-control {
+        height: 42px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    .age-badge {
+        height: 42px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    /* Action Buttons layout for Mobile */
+    .action-toolbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .action-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .act-btn {
+        height: 44px;
+        font-size: 13.5px;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .action-btn-exit-wrap {
+        width: 100%;
+    }
+
+    .btn-exit {
+        width: 100%;
+        height: 44px;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    /* Search Toolbar layout for Mobile */
+    .search-fieldset {
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .search-toolbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .search-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        min-width: 100%;
+    }
+
+    .search-control {
+        height: 42px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    .btn-search {
+        height: 44px;
+        font-size: 14px;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    /* Table Scroll for Mobile */
+    .grid-table-wrap {
+        max-height: 350px;
+        border-radius: 8px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .desktop-grid-table th, 
+    .desktop-grid-table td {
+        padding: 10px 10px;
+        font-size: 12px;
+    }
+
+    .app-statusbar {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+        padding: 10px;
+        border-radius: 0;
+    }
+}
