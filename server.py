@@ -177,6 +177,56 @@ class MilitaryRequestHandler(SimpleHTTPRequestHandler):
             if os.path.exists(filepath):
                 with open(filepath, 'r', encoding='utf-8') as f:
                     content = f.read()
+
+                try:
+                    conn = get_db()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM military_personnel ORDER BY id ASC")
+                    db_rows = cursor.fetchall()
+                    conn.close()
+
+                    html_rows = []
+                    for idx, p in enumerate(db_rows):
+                        p_dict = dict(p)
+                        p_id = p_dict.get('id', '')
+                        manual_id = html.escape(str(p_dict.get('manual_id') or ''))
+                        rank = html.escape(str(p_dict.get('rank') or ''))
+                        surname = html.escape(str(p_dict.get('surname') or ''))
+                        given_name = html.escape(str(p_dict.get('given_name') or p_dict.get('name_khmer') or ''))
+                        gender = html.escape(str(p_dict.get('gender') or ''))
+                        id_card = html.escape(str(p_dict.get('id_card') or ''))
+                        position = html.escape(str(p_dict.get('position') or ''))
+                        unit_group = html.escape(str(p_dict.get('unit_group') or ''))
+                        unit = html.escape(str(p_dict.get('unit') or ''))
+                        dob = html.escape(str(p_dict.get('dob') or ''))
+                        enlistment_date = html.escape(str(p_dict.get('enlistment_date') or ''))
+                        rank_date = html.escape(str(p_dict.get('rank_date') or ''))
+                        position_date = html.escape(str(p_dict.get('position_date') or ''))
+                        selected_cls = 'class="selected-row"' if idx == 0 else ''
+
+                        row_html = f'<tr data-id="{p_id}" {selected_cls}>' \
+                                   f'<td>{idx + 1}</td>' \
+                                   f'<td>{manual_id}</td>' \
+                                   f'<td>{rank}</td>' \
+                                   f'<td>{surname}</td>' \
+                                   f'<td>{given_name}</td>' \
+                                   f'<td>{gender}</td>' \
+                                   f'<td>{id_card}</td>' \
+                                   f'<td>{position}</td>' \
+                                   f'<td>{unit_group}</td>' \
+                                   f'<td>{unit}</td>' \
+                                   f'<td>{dob}</td>' \
+                                   f'<td>{enlistment_date}</td>' \
+                                   f'<td>{rank_date}</td>' \
+                                   f'<td>{position_date}</td>' \
+                                   f'</tr>'
+                        html_rows.append(row_html)
+
+                    rendered_body = '<tbody id="personnelTableBody">\n' + '\n'.join(html_rows) + '\n</tbody>'
+                    content = re.sub(r'<tbody id="personnelTableBody">.*?</tbody>', rendered_body, content, flags=re.DOTALL)
+                except Exception as e:
+                    print("Python rendering error:", e)
+
                 content = re.sub(r'<\?php.*?\?>', '', content, flags=re.DOTALL)
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/html; charset=utf-8')

@@ -25,7 +25,7 @@ require_once __DIR__ . '/config.php';
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Stylesheet -->
-    <link rel="stylesheet" href="assets/css/style.css?v=4">
+    <link rel="stylesheet" href="assets/css/style.css?v=5">
     <style>
 /* ==========================================================================
    ប្រព័ន្ធគ្រប់គ្រងទិន្នន័យនាយទាហាន (Military Personnel Management System)
@@ -1166,7 +1166,51 @@ body.desktop-app-body {
                             </tr>
                         </thead>
                         <tbody id="personnelTableBody">
-                            <!-- Loaded dynamically via JavaScript -->
+<?php
+try {
+    $dbFile = __DIR__ . '/military_db.sqlite';
+    if (file_exists($dbFile)) {
+        $pdo = new PDO("sqlite:" . $dbFile);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $stmt = $pdo->query("SELECT * FROM military_personnel ORDER BY id ASC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as $idx => $p) {
+            $pId = htmlspecialchars($p['id']);
+            $manualId = htmlspecialchars($p['manual_id'] ?? '');
+            $rank = htmlspecialchars($p['rank'] ?? '');
+            $surname = htmlspecialchars($p['surname'] ?? '');
+            $givenName = htmlspecialchars($p['given_name'] ?? $p['name_khmer'] ?? '');
+            $gender = htmlspecialchars($p['gender'] ?? '');
+            $idCard = htmlspecialchars($p['id_card'] ?? '');
+            $position = htmlspecialchars($p['position'] ?? '');
+            $unitGroup = htmlspecialchars($p['unit_group'] ?? '');
+            $unit = htmlspecialchars($p['unit'] ?? '');
+            $dob = htmlspecialchars($p['dob'] ?? '');
+            $enlistmentDate = htmlspecialchars($p['enlistment_date'] ?? '');
+            $rankDate = htmlspecialchars($p['rank_date'] ?? '');
+            $positionDate = htmlspecialchars($p['position_date'] ?? '');
+            $selectedClass = ($idx === 0) ? 'class="selected-row"' : '';
+            
+            echo "<tr data-id=\"{$pId}\" {$selectedClass}>";
+            echo "<td>" . ($idx + 1) . "</td>";
+            echo "<td>{$manualId}</td>";
+            echo "<td>{$rank}</td>";
+            echo "<td>{$surname}</td>";
+            echo "<td>{$givenName}</td>";
+            echo "<td>{$gender}</td>";
+            echo "<td>{$idCard}</td>";
+            echo "<td>{$position}</td>";
+            echo "<td>{$unitGroup}</td>";
+            echo "<td>{$unit}</td>";
+            echo "<td>{$dob}</td>";
+            echo "<td>{$enlistmentDate}</td>";
+            echo "<td>{$rankDate}</td>";
+            echo "<td>{$positionDate}</td>";
+            echo "</tr>\n";
+        }
+    }
+} catch (Exception $e) {}
+?>
                         </tbody>
                     </table>
                 </div>
@@ -1186,6 +1230,6 @@ body.desktop-app-body {
     </div>
 
     <!-- JavaScript Bundle -->
-    <script src="assets/js/app.js?v=4"></script>
+    <script src="assets/js/app.js?v=5"></script>
 </body>
 </html>
